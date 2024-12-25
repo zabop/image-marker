@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Marker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        #image-container {
+            position: relative;
+            display: inline-block;
+        }
+        .dot {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: red;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
+        }
+        #coordinates {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Image Marker</h1>
+    <p>Enter multiple image URLs below (one per line) and click on each image to mark points. The next image will be shown after marking a point.</p>
+
+    <textarea id="image-urls" placeholder="Enter image URLs here, one per line" style="width: 70%; height: 100px;"></textarea>
+    <button onclick="startImageSequence()">Start</button>
+
+    <div id="image-container"></div>
+    <button id="skip-button" onclick="skipImage()" style="display: none; margin-top: 10px;">Skip</button>
+
+    <div id="coordinates">
+        <h3>Marked Coordinates:</h3>
+        <ul id="coordinates-list"></ul>
+    </div>
+
+    <script>
+        let imageUrls = [];
+        let currentImageIndex = 0;
+
+        function startImageSequence() {
+            const urlsInput = document.getElementById('image-urls').value;
+            imageUrls = urlsInput.split('\n').map(url => url.trim()).filter(url => url);
+            currentImageIndex = 0;
+
+            if (imageUrls.length === 0) {
+                alert('Please enter at least one valid URL!');
+                return;
+            }
+
+            loadNextImage();
+        }
+
+        function loadNextImage() {
+            const imageContainer = document.getElementById('image-container');
+            const skipButton = document.getElementById('skip-button');
+
+            // Clear any existing image and dots
+            imageContainer.innerHTML = '';
+
+            if (currentImageIndex >= imageUrls.length) {
+                alert('You have marked all the images!');
+                skipButton.style.display = 'none';
+                return;
+            }
+
+            const img = document.createElement('img');
+            img.src = imageUrls[currentImageIndex];
+            img.alt = 'Loaded Image';
+            img.onload = function() {
+                imageContainer.appendChild(img);
+                skipButton.style.display = 'inline-block';
+            };
+            img.onerror = function() {
+                alert('Failed to load image. Please check the URL: ' + imageUrls[currentImageIndex]);
+            };
+
+            img.addEventListener('click', function(event) {
+                const rect = img.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+
+                // Create a dot at the clicked position
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.style.left = `${x}px`;
+                dot.style.top = `${y}px`;
+                imageContainer.appendChild(dot);
+
+                // Add the coordinates and URL to the list
+                const coordinatesList = document.getElementById('coordinates-list');
+                const listItem = document.createElement('li');
+                listItem.textContent = `${imageUrls[currentImageIndex]} - X: ${Math.round(x)}, Y: ${Math.round(y)}`;
+                coordinatesList.appendChild(listItem);
+
+                // Load the next image
+                currentImageIndex++;
+                loadNextImage();
+            });
+        }
+
+        function skipImage() {
+            const coordinatesList = document.getElementById('coordinates-list');
+            const listItem = document.createElement('li');
+            listItem.textContent = `${imageUrls[currentImageIndex]} - X: NaN, Y: NaN`;
+            coordinatesList.appendChild(listItem);
+
+            // Load the next image
+            currentImageIndex++;
+            loadNextImage();
+        }
+    </script>
+</body>
+</html>
+
