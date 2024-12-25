@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Coordinate Marker</title>
+    <style>
+        #image-container {
+            position: relative;
+            display: inline-block;
+        }
+        .cross {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-color: transparent;
+        }
+        .cross:before, .cross:after {
+            content: '';
+            position: absolute;
+            background: red;
+        }
+        .cross:before {
+            width: 2px;
+            height: 30px;
+            top: 0;
+            left: 14px;
+        }
+        .cross:after {
+            width: 30px;
+            height: 2px;
+            top: 14px;
+            left: 0;
+        }
+        #navigation {
+            margin-top: 20px;
+        }
+        #image-url {
+            margin-bottom: 10px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <h1>Image Coordinate Marker</h1>
+    <form id="coordinate-form">
+        <label for="input">Enter URLs and Coordinates (one per line):</label><br>
+        <textarea id="input" placeholder="URL X Y" style="width: 600px; height: 100px;"></textarea><br>
+        <button type="submit">Submit</button>
+    </form>
+    <br>
+    <div id="image-url"></div>
+    <div id="image-container"></div>
+    <div id="navigation" style="display: none;">
+        <button id="prev">Previous</button>
+        <button id="next">Next</button>
+    </div>
+
+    <script>
+        const form = document.getElementById('coordinate-form');
+        const imageContainer = document.getElementById('image-container');
+        const navigation = document.getElementById('navigation');
+        const prevButton = document.getElementById('prev');
+        const nextButton = document.getElementById('next');
+        const imageUrlDisplay = document.getElementById('image-url');
+
+        let entries = [];
+        let currentIndex = 0;
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const input = document.getElementById('input').value.trim();
+            entries = input.split('\n').map(line => {
+                const [url, x, y] = line.split(' ');
+                return { url, x: parseFloat(x), y: parseFloat(y) };
+            }).filter(entry => entry.url && !isNaN(entry.x) && !isNaN(entry.y));
+
+            if (entries.length === 0) {
+                alert('Please enter valid entries in the format: URL X Y');
+                return;
+            }
+
+            currentIndex = 0;
+            showImage();
+            navigation.style.display = 'block';
+        });
+
+        function showImage() {
+            if (entries.length === 0) return;
+
+            const { url, x, y } = entries[currentIndex];
+            imageContainer.innerHTML = '';
+            imageUrlDisplay.textContent = `Currently viewing: ${url}`;
+
+            const img = document.createElement('img');
+            img.src = url;
+            img.style.maxWidth = '800px';
+            img.style.display = 'block';
+
+            img.onload = () => {
+                const originalWidth = img.naturalWidth;
+                const originalHeight = img.naturalHeight;
+                const displayedWidth = img.width;
+                const displayedHeight = img.height;
+
+                const scaleX = displayedWidth / originalWidth;
+                const scaleY = displayedHeight / originalHeight;
+                const scaledX = x * scaleX;
+                const scaledY = y * scaleY;
+
+                const cross = document.createElement('div');
+                cross.className = 'cross';
+                cross.style.left = `${scaledX - 15}px`;
+                cross.style.top = `${scaledY - 15}px`;
+                imageContainer.appendChild(cross);
+            };
+
+            img.onerror = () => {
+                alert('Failed to load image: ' + url);
+            };
+
+            imageContainer.appendChild(img);
+        }
+
+        prevButton.addEventListener('click', () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+                showImage();
+            }
+        });
+
+        nextButton.addEventListener('click', () => {
+            if (currentIndex < entries.length - 1) {
+                currentIndex++;
+                showImage();
+            }
+        });
+    </script>
+</body>
+</html>
+
