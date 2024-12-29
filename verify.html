@@ -45,7 +45,7 @@
     <h1>Image Coordinate Marker</h1>
     <form id="coordinate-form">
         <label for="input">Enter URLs and Coordinates (one per line):</label><br>
-        <textarea id="input" placeholder="URL X Y" style="width: 600px; height: 100px;"></textarea><br>
+        <textarea id="input" placeholder="URL - X: <value>, Y: <value>" style="width: 600px; height: 100px;"></textarea><br>
         <button type="submit">Submit</button>
     </form>
     <br>
@@ -72,12 +72,16 @@
 
             const input = document.getElementById('input').value.trim();
             entries = input.split('\n').map(line => {
-                const [url, x, y] = line.split(' ');
-                return { url, x: parseFloat(x), y: parseFloat(y) };
-            }).filter(entry => entry.url && !isNaN(entry.x) && !isNaN(entry.y));
+                const match = line.match(/^(https?:\/\/\S+)\s*-\s*X:\s*(\d+\.?\d*),\s*Y:\s*(\d+\.?\d*)$/);
+                if (match) {
+                    const [_, url, x, y] = match;
+                    return { url, x: parseFloat(x), y: parseFloat(y) };
+                }
+                return null;
+            }).filter(entry => entry);
 
             if (entries.length === 0) {
-                alert('Please enter valid entries in the format: URL X Y');
+                alert('Please enter valid entries in the format: URL - X: <value>, Y: <value>');
                 return;
             }
 
